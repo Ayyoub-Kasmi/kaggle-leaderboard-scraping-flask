@@ -1,8 +1,10 @@
 import os
 from flask import Flask, jsonify
+from flask_cors import CORS
 # Kaggle credentials: set KAGGLE_USERNAME and KAGGLE_KEY in the environment (or use ~/.kaggle/kaggle.json). Never commit them.
 
 app = Flask(__name__)
+CORS(app)
 
 # Instantiate the API class
 from kaggle.api.kaggle_api_extended import KaggleApi
@@ -64,7 +66,7 @@ def get_full_leaderboard():
 
     # initlaize the list of teams with the names, and empty scores
     for team in leaderboard_json[0]:
-        teams_scores.append({'team': team['team'], 'scores': [0, 0, 0, 0, 0]})
+        teams_scores.append({'team': team['team'], 'scores': ["0.000", "0.000", "0.000", "0.000", "0.000"]})
 
     # fill the scores of each team, based on the team name in a challenge
     for i, challenge in enumerate(leaderboard_json):
@@ -73,8 +75,9 @@ def get_full_leaderboard():
                 if t['team'] == team['team']:
                     t['scores'][i] = team['score']
 
-    # return jsonify(leaderboard_json)
-    return jsonify(teams_scores)
+    # return jsonify(teams_scores)
+    weights = [2,7,5,5,6]
+    return jsonify({"infos": teams_scores, "weights": weights})
 
 if __name__ == '__main__':
     app.run(debug=True)
