@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 # Kaggle credentials: set KAGGLE_USERNAME and KAGGLE_KEY in the environment (or use ~/.kaggle/kaggle.json). Never commit them.
 
@@ -7,7 +7,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Instantiate the API class
-from kaggle.api.kaggle_api_extended import KaggleApi
+from kaggle.api.kaggle_api_extended import Competition, KaggleApi
 api = KaggleApi()
 
 # Authenticate using your Kaggle credentials
@@ -30,7 +30,7 @@ def get_leaderboard(competition):
 
     return jsonify(leaderboard_json)
 
-@app.route('/leaderboard-full', methods=['GET'])
+@app.route('/leaderboard-full', methods=['POST'])
 def get_full_leaderboard():
     def get_leaderboard_info(competition):
         # Get the leaderboard of a competition
@@ -48,13 +48,17 @@ def get_full_leaderboard():
 
         return leaderboard_json
 
-    competitions = [
-        "1b22f135b4d3a31152fa",
-        "DATAHACK-Collective-Opinion-Spam-Detection",
-        "datahack-community-detection",
-        "DATAHACK-Yalidine-Challenge",
-        "DATAHACK-store-recommendation-system",
-    ]
+    
+    # competitions = [
+    #     "1b22f135b4d3a31152fa",
+    #     "DATAHACK-Collective-Opinion-Spam-Detection",
+    #     "datahack-community-detection",
+    #     "DATAHACK-Yalidine-Challenge",
+    #     "DATAHACK-store-recommendation-system",
+    #     "8b971ca63765",
+    # ]
+
+    competitions = request.get_json()['competitions']
 
     # generate leaderboard for each competition
     leaderboard_json = []
@@ -66,7 +70,7 @@ def get_full_leaderboard():
 
     # initlaize the list of teams with the names, and empty scores
     for team in leaderboard_json[0]:
-        teams_scores.append({'team': team['team'], 'scores': ["0.000", "0.000", "0.000", "0.000", "0.000"]})
+        teams_scores.append({'team': team['team'], 'scores': ["0.000"] * len(competitions)})
 
     # fill the scores of each team, based on the team name in a challenge
     for i, challenge in enumerate(leaderboard_json):
@@ -76,8 +80,7 @@ def get_full_leaderboard():
                     t['scores'][i] = team['score']
 
     # return jsonify(teams_scores)
-    weights = [2,7,5,5,6]
-    return jsonify({"infos": teams_scores, "weights": weights})
+    return jsonify({"infos": teams_scores})
 
 if __name__ == '__main__':
     app.run(debug=True)
